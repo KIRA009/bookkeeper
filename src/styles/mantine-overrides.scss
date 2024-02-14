@@ -1,0 +1,9 @@
+.mantine-TextInput-root,
+.mantine-Textarea-root,
+.mantine-DatePicker-root,
+.mantine-Select-root {
+    display: grid;
+    grid-template-columns: 1fr 5fr;
+    align-items: center;
+    margin: 20px 0;
+}
