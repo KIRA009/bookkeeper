@@ -6,8 +6,8 @@ import {
 } from '../../atoms/invoices';
 import { CustomerSelector } from '../CustomerSelector';
 import { ItemList } from '../ItemList';
-import { Invoice } from '../../types/invoice';
-import { TextInput, Button, Text, Flex } from '@mantine/core';
+import { Invoice, InvoiceStatus } from '../../types/invoice';
+import { TextInput, Button, Text, Flex, Grid } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { Link } from 'react-router-dom';
 import { Customer } from '../../types/customer';
@@ -27,7 +27,7 @@ export const InvoiceBody = ({ invoice, customer }: Props) => {
     const invoices = useAtomValue(getInvoicesAtom);
     const defaultInvoiceNum = useMemo(() => {
         let maxInvoiceNum = 0;
-        for (const invoice of invoices) {
+        for (const invoice of Object.values(invoices)) {
             if (!isNaN(Number(invoice.number))) {
                 maxInvoiceNum = Math.max(maxInvoiceNum, Number(invoice.number));
             }
@@ -43,6 +43,7 @@ export const InvoiceBody = ({ invoice, customer }: Props) => {
                 ? invoice.creationDate
                 : new Date().toISOString(),
             dueDate: invoice ? invoice.dueDate : null,
+            status: invoice ? invoice.status : InvoiceStatus.Draft,
             subject: invoice ? invoice.subject : '',
             items: invoice
                 ? invoice.items
@@ -118,22 +119,41 @@ export const InvoiceBody = ({ invoice, customer }: Props) => {
     return (
         <FormProvider form={form}>
             <form onSubmit={form.onSubmit(save)}>
-                <CustomerSelector useFormContext={useFormContext} />
+                <Grid>
+                    <Grid.Col span={6}>
+                        <CustomerSelector useFormContext={useFormContext} />
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        <TextInput
+                            label='Invoice Number'
+                            mb={20}
+                            {...form.getInputProps('number')}
+                        />
+                    </Grid.Col>
+                </Grid>
+                <Grid>
+                    <Grid.Col span={6}>
+                        <DatePickerInput
+                            label='Invoice date'
+                            mb={20}
+                            {...form.getInputProps('creationDate')}
+                            value={new Date(form.values.creationDate)}
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        <DatePickerInput
+                            label='Invoice due date'
+                            mb={20}
+                            {...form.getInputProps('dueDate')}
+                            value={dueDate}
+                        />
+                    </Grid.Col>
+                </Grid>
                 <TextInput
-                    label='Invoice Number'
-                    {...form.getInputProps('number')}
+                    label='Subject'
+                    {...form.getInputProps('subject')}
+                    mb={20}
                 />
-                <DatePickerInput
-                    label='Invoice date'
-                    {...form.getInputProps('creationDate')}
-                    value={new Date(form.values.creationDate)}
-                />
-                <DatePickerInput
-                    label='Invoice due date'
-                    {...form.getInputProps('dueDate')}
-                    value={dueDate}
-                />
-                <TextInput label='Subject' {...form.getInputProps('subject')} />
                 <ItemList form={form} />
                 <Flex justify='space-between' align='flex-end'>
                     <Link to='/invoices'>

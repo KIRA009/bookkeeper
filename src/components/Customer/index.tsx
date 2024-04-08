@@ -7,12 +7,22 @@ import {
     Container,
     Text,
     Flex,
+    Select,
+    ComboboxItem,
+    OptionsFilter,
 } from '@mantine/core';
 import { Link } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
 import { createFormContext, isEmail, isNotEmpty } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { States } from './types';
+import currencies from '../../currencies.json';
+import { getRouteByName } from '../../routes/utils';
+
+const currenciesData = currencies.map((currency) => ({
+    value: currency.code,
+    label: currency.currency,
+}));
 
 interface Props {
     state: States;
@@ -31,6 +41,19 @@ const isViewing = (state: States) => state === States.View;
 const isEditing = (state: States) => state === States.Edit;
 const isAdding = (state: States) => state === States.Add;
 
+const optionsFilter: OptionsFilter = ({ options, search }) => {
+    return options.filter((option) => {
+        const _option = option as ComboboxItem;
+        if (
+            _option.label.toLowerCase().includes(search.toLowerCase()) ||
+            _option.value.toLowerCase().includes(search.toLowerCase())
+        ) {
+            return true;
+        }
+        return false;
+    });
+};
+
 const CustomerForm = ({ state }: Props) => {
     const form = useFormContext();
     return (
@@ -38,26 +61,36 @@ const CustomerForm = ({ state }: Props) => {
             <TextInput
                 label='Name'
                 readOnly={!(isAdding(state) || isEditing(state))}
+                mb={20}
+                withAsterisk
                 {...form.getInputProps('name')}
             />
-            <TextInput
+            <Select
                 label='Currency'
                 readOnly={!(isAdding(state) || isEditing(state))}
+                mb={20}
+                data={currenciesData}
+                searchable
+                filter={optionsFilter}
+                withAsterisk
                 {...form.getInputProps('currency')}
             />
             <Textarea
                 label='Address'
                 readOnly={!(isAdding(state) || isEditing(state))}
+                mb={20}
                 {...form.getInputProps('address')}
             />
             <TextInput
                 label='Email'
                 readOnly={!(isAdding(state) || isEditing(state))}
+                mb={20}
                 {...form.getInputProps('email')}
             />
             <TextInput
                 label='Website'
                 readOnly={!(isAdding(state) || isEditing(state))}
+                mb={20}
                 {...form.getInputProps('website')}
             />
         </>
@@ -77,7 +110,6 @@ const Customer = ({ state }: Props) => {
         validate: {
             name: isNotEmpty('Name is required'),
             currency: isNotEmpty('Currency is required'),
-            address: isNotEmpty('Address is required'),
             email: (value) => (value ? isEmail('Invalid email')(value) : null),
         },
     });
@@ -113,7 +145,7 @@ const Customer = ({ state }: Props) => {
     return (
         <FormProvider form={form}>
             <Container size='xs'>
-                <Text component='h1' size='xl'>
+                <Text component='h1' size='xl' mb={30}>
                     {isViewing(state)
                         ? `VIEW CUSTOMER DETAILS`
                         : isEditing(state)
@@ -132,7 +164,7 @@ const Customer = ({ state }: Props) => {
                     >
                         <CustomerForm state={state} />
                         <Flex justify='space-between' align='flex-end'>
-                            <Link to='/invoice/add/'>
+                            <Link to={getRouteByName('add_invoice').url}>
                                 <Text>Create an invoice</Text>
                             </Link>
                             <Button type='submit' variant='filled'>

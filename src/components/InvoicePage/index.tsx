@@ -1,18 +1,41 @@
 import { Document, Page, View, Text, Image } from '@react-pdf/renderer';
-import compose from './compose';
 import { Invoice } from '../../types/invoice';
 import converter from 'number-to-words';
 import { Customer } from '../../types/customer';
 import {
+    getFormattedInvoiceAmount,
+    getFormattedInvoiceNumber,
     getInvoiceAmount,
-    getInvoiceAmountInString,
     getLongStringCurrency,
-} from '../../utils/invoiceAmount';
+} from '../../utils/invoice';
+import { Font } from '@react-pdf/renderer';
+import { dateToString } from '../../utils/date';
+// import signature from '../../assets/signature.png'
+
+Font.register({
+    family: 'Nunito',
+    fonts: [
+        {
+            src: 'https://fonts.gstatic.com/s/nunito/v12/XRXV3I6Li01BKofINeaE.ttf',
+        },
+        {
+            src: 'https://fonts.gstatic.com/s/nunito/v12/XRXW3I6Li01BKofA6sKUYevN.ttf',
+            fontWeight: 600,
+        },
+    ],
+});
+Font.registerHyphenationCallback((word) => [word]);
 
 interface Props {
     invoice: Invoice;
     customer: Customer;
 }
+
+const WrapText = ({ text }: { text?: string }) => (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        {text?.match(/\w+|\W+/g)?.map((seg, i) => <Text key={i}>{seg}</Text>)}
+    </View>
+);
 
 export const InvoicePage = ({ invoice, customer }: Props) => {
     const sum = getInvoiceAmount(invoice);
@@ -21,163 +44,195 @@ export const InvoicePage = ({ invoice, customer }: Props) => {
         .split(' ')
         .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
         .join(' ');
-    const sumWithSymbol = getInvoiceAmountInString(sum, customer);
     const currencyString = getLongStringCurrency(customer);
     return (
-        <Document>
-            <Page style={compose('invoice_wrapper')}>
-                <View style={compose('flex')}>
-                    <View style={compose('50')}>
-                        <Text style={compose('bold fs-medium')}>
+        <Document title={invoice.number}>
+            <Page
+                size='A4'
+                style={{ padding: 40, fontFamily: 'Nunito', fontSize: 10 }}
+            >
+                <View
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                    }}
+                >
+                    <View>
+                        <Text style={{ fontWeight: 600 }}>
                             {import.meta.env.VITE_USER_NAME}
                         </Text>
-                        <Text style={compose('fs-small')}>Assam</Text>
-                        <Text style={compose('fs-small')}>India</Text>
+                        <Text>Assam</Text>
+                        <Text>India</Text>
+                        <Text>GSTIN: {import.meta.env.VITE_GSTIN}</Text>
                     </View>
-                    <View style={compose('50')}>
-                        <Text style={compose('fs-large right bold')}>
+                    <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={{ fontSize: 18, fontWeight: 600 }}>
                             TAX INVOICE
                         </Text>
-                        <Text style={compose('fs-small right bold')}>
-                            # INV - {invoice.number}
+                        <Text style={{ fontWeight: 600 }}>
+                            # {getFormattedInvoiceNumber(invoice)}
                         </Text>
                     </View>
                 </View>
-                <View style={compose('flex align-center mt-large')}>
-                    <View style={compose('50')}>
-                        <Text style={compose('fs-small')}>Bill To:</Text>
-                        <Text style={compose('fs-small bold mt-small')}>
-                            {customer.name}
-                        </Text>
-                        <Text style={compose('fs-small')}>
-                            {customer.address}
-                        </Text>
+                <View
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'flex-end',
+                        justifyContent: 'space-between',
+                        marginTop: 50,
+                    }}
+                >
+                    <View style={{ display: 'flex', rowGap: 5 }}>
+                        <Text>Bill To</Text>
+                        <Text>{customer.name}</Text>
+                        {customer.address &&
+                            customer.address
+                                .split('\n')
+                                .map((line, index) => (
+                                    <Text key={index}>{line}</Text>
+                                ))}
                     </View>
-                    <View style={compose('flex 35 right')}>
-                        <Text style={compose('fs-small bold')}>
-                            Invoice Date:{' '}
-                        </Text>
-                        <Text style={compose('fs-small bold')}>
-                            {invoice.creationDate}
-                        </Text>
+                    <View style={{ alignItems: 'flex-end', rowGap: 5 }}>
+                        <View
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                                width: 150,
+                            }}
+                        >
+                            <Text>Invoice Date:</Text>
+                            <Text>{dateToString(invoice.creationDate)}</Text>
+                        </View>
+                        {invoice.dueDate && (
+                            <View
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between',
+                                    width: 150,
+                                }}
+                            >
+                                <Text>Due Date:</Text>
+                                <Text>{dateToString(invoice.dueDate)}</Text>
+                            </View>
+                        )}
                     </View>
                 </View>
-                <View style={compose('mt-large')}>
-                    <Text style={compose('fs-small')}>Subject:</Text>
-                    <Text style={compose('fs-small bold mt-small')}>
-                        {invoice.subject}
-                    </Text>
+                <View style={{ display: 'flex', rowGap: 5, marginTop: 20 }}>
+                    <Text>Subject:</Text>
+                    <Text>{invoice.subject}</Text>
                 </View>
-                <View style={compose('mt-large')}>
-                    <View style={compose('row flex bg-gray')}>
-                        <Text style={compose('fs-small w-8 p-4-8 fl-small')}>
-                            #
-                        </Text>
-                        <Text
-                            style={compose('fs-small w-40 p-4-8 left fl-large')}
-                        >
-                            Item & Description
-                        </Text>
-                        <Text
-                            style={compose('fs-small w-17 p-4-8 right fl-med')}
-                        >
-                            Hours
-                        </Text>
-                        <Text
-                            style={compose('fs-small w-17 p-4-8 right fl-med')}
-                        >
-                            Rate
-                        </Text>
-                        <Text
-                            style={compose('fs-small w-18 p-4-8 right fl-med')}
-                        >
-                            Amount
-                        </Text>
-                    </View>
+                <View
+                    style={{
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        marginTop: 20,
+                        padding: 5,
+                        color: '#fff',
+                        display: 'flex',
+                        flexDirection: 'row',
+                    }}
+                >
+                    <Text style={{ flex: 1 }}>#</Text>
+                    <Text style={{ flex: 6 }}>Item & Description</Text>
+                    <Text style={{ flex: 2, textAlign: 'right' }}>Qty</Text>
+                    <Text style={{ flex: 2, textAlign: 'right' }}>Rate</Text>
+                    <Text style={{ flex: 2, textAlign: 'right' }}>IGST</Text>
+                    <Text style={{ flex: 2, textAlign: 'right' }}>Amount</Text>
+                </View>
+                <View style={{ display: 'flex' }}>
                     {invoice.items.map((item, index) => (
-                        <View style={compose('row flex')} key={index}>
-                            <Text
-                                style={compose('fs-small w-8 p-4-8 fl-small')}
-                            >
-                                {index + 1}
+                        <View
+                            key={index}
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                borderBottom: '1px solid rgba(0, 0, 0, 0.5)',
+                                paddingVertical: 10,
+                                paddingHorizontal: 5,
+                            }}
+                        >
+                            <Text style={{ flex: 1 }}>{index + 1}</Text>
+                            <Text style={{ flex: 6 }}>{item.itemDetail}</Text>
+                            <Text style={{ flex: 2, textAlign: 'right' }}>
+                                {item.quantity.toFixed(2)}
                             </Text>
-                            <Text
-                                style={compose(
-                                    'fs-small w-40 p-4-8 left fl-large',
-                                )}
-                            >
-                                {item.itemDetail}
+                            <Text style={{ flex: 2, textAlign: 'right' }}>
+                                {item.rate.toFixed(2)}
                             </Text>
-                            <Text
-                                style={compose(
-                                    'fs-small w-17 p-4-8 right fl-med',
-                                )}
+                            <View
+                                style={{
+                                    display: 'flex',
+                                    flex: 2,
+                                    textAlign: 'right',
+                                }}
                             >
-                                {item.quantity}
-                            </Text>
-                            <Text
-                                style={compose(
-                                    'fs-small w-17 p-4-8 right fl-med',
-                                )}
-                            >
-                                {item.rate}
-                            </Text>
-                            <Text
-                                style={compose(
-                                    'fs-small w-18 p-4-8 right fl-med',
-                                )}
-                            >
-                                {item.quantity * item.rate}
+                                <Text>0.00</Text>
+                                <Text>0%</Text>
+                            </View>
+                            <Text style={{ flex: 2, textAlign: 'right' }}>
+                                {(item.quantity * item.rate).toFixed(2)}
                             </Text>
                         </View>
                     ))}
                 </View>
-                <View style={compose('mt-small flex')}>
-                    <Text style={compose('fs-small w-48 p-4-8')}></Text>
-                    <Text style={compose('fs-small w-26 p-4-8 right')}>
-                        Sub Total
-                    </Text>
-                    <Text style={compose('fs-small w-26 p-4-8 right')}>
-                        {sumWithSymbol}
-                    </Text>
-                </View>
-                <View style={compose('mt-small flex')}>
-                    <Text style={compose('fs-small w-48 p-4-8')}></Text>
-                    <Text
-                        style={compose(
-                            'fs-small w-26 p-4-8 right bold bg-light-gray',
-                        )}
+                <View
+                    style={{
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        marginTop: 20,
+                        rowGap: 20,
+                    }}
+                >
+                    <View
+                        style={{
+                            width: 150,
+                            justifyContent: 'space-between',
+                            flexDirection: 'row',
+                        }}
                     >
-                        Total
-                    </Text>
-                    <Text
-                        style={compose(
-                            'fs-small w-26 p-4-8 right bold bg-light-gray',
-                        )}
+                        <Text>Sub Total</Text>
+                        <Text>{getFormattedInvoiceAmount(sum)}</Text>
+                    </View>
+                    <View
+                        style={{
+                            width: 150,
+                            justifyContent: 'space-between',
+                            flexDirection: 'row',
+                        }}
                     >
-                        {sumWithSymbol}
-                    </Text>
+                        <Text>IGST0 (0%)</Text>
+                        <Text>{getFormattedInvoiceAmount(0)}</Text>
+                    </View>
+                    <View
+                        style={{
+                            width: 150,
+                            justifyContent: 'space-between',
+                            flexDirection: 'row',
+                        }}
+                    >
+                        <Text>Total</Text>
+                        <Text>{getFormattedInvoiceAmount(sum)}</Text>
+                    </View>
+                    <View
+                        style={{
+                            width: 250,
+                            justifyContent: 'space-between',
+                            flexDirection: 'row',
+                        }}
+                    >
+                        <Text style={{ width: 100 }}>Total in words</Text>
+                        <WrapText text={`${wordSum} ${currencyString}`} />
+                    </View>
                 </View>
-                <View style={compose('mt-small flex')}>
-                    <Text style={compose('fs-small w-48 p-4-8')}></Text>
-                    <Text style={compose('fs-small w-26 p-4-8 right')}>
-                        Total in Words:
-                    </Text>
-                    <Text style={compose('fs-small w-26 p-4-8 right bold')}>
-                        {wordSum} {currencyString}
-                    </Text>
-                </View>
-                <View style={compose('mt-large')}>
+                <View style={{ marginTop: 50, rowGap: 5 }}>
                     <Image
                         src={import.meta.env.VITE_SIG_URL}
-                        style={compose('image w-35')}
+                        style={{ width: 150, height: 50 }}
                     />
-                    <Text style={compose('mt-small fs-small')}>
-                        {import.meta.env.VITE_USER_NAME}
-                    </Text>
-                    <Text style={compose('fs-small')}>
-                        Authorized Signature
-                    </Text>
+                    <Text>Authorized Signature</Text>
                 </View>
             </Page>
         </Document>

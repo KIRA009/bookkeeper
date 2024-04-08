@@ -1,67 +1,44 @@
-import { Flex, Text } from '@mantine/core';
-import { PDFDownloadLink } from '@react-pdf/renderer';
-import { MouseEvent, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { deleteInvoiceAtom } from '../../atoms/invoices';
+import { Table } from '@mantine/core';
 import { Customer } from '../../types/customer';
 import { Invoice } from '../../types/invoice';
 import {
+    getFormattedInvoiceNumber,
     getInvoiceAmount,
-    getInvoiceAmountInString,
-} from '../../utils/invoiceAmount';
-import { InvoicePage } from '../InvoicePage';
-import { useSetAtom } from 'jotai';
+    getInvoiceAmountWithCurrency,
+} from '../../utils/invoice';
 
 interface Props {
     invoice: Invoice;
     customer: Customer;
+    onRowClick?: () => void;
 }
 
-export const InvoiceDetails = ({ invoice, customer }: Props) => {
-    const [showDownloadLink, setShowDownloadLink] = useState(false);
-    const sumWithSymbol = getInvoiceAmountInString(
+export const InvoiceDetails = ({ invoice, customer, onRowClick }: Props) => {
+    const sumWithSymbol = getInvoiceAmountWithCurrency(
         getInvoiceAmount(invoice),
         customer,
     );
-    const deleteInvoice = useSetAtom(deleteInvoiceAtom);
-    const _deleteInvoice = (
-        e: MouseEvent<HTMLAnchorElement>,
-        invoiceId: string,
-    ) => {
-        e.preventDefault();
-        deleteInvoice(invoiceId);
-    };
+    const creationDate = new Date(invoice.creationDate);
+    const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : null;
+
+    const creationDateString = creationDate.toLocaleDateString('en-UK', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+    });
+    const dueDateString = dueDate?.toLocaleDateString('en-UK', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+    });
     return (
-        <Flex justify='space-between' className='p-4 mb-4 bg-gray-300'>
-            <Text component='span'>
-                INV - {invoice.number} for {sumWithSymbol}
-            </Text>
-            <Text component='span'>
-                <Link to={`/invoice/edit/${invoice.id}`}>
-                    <Text>Edit invoice</Text>
-                </Link>
-                {showDownloadLink ? (
-                    <PDFDownloadLink
-                        document={
-                            <InvoicePage
-                                invoice={invoice}
-                                customer={customer}
-                            />
-                        }
-                        fileName={`INV - ${invoice.number}`}
-                        aria-label='Save PDF'
-                    >
-                        Download
-                    </PDFDownloadLink>
-                ) : (
-                    <Link to='#' onClick={() => setShowDownloadLink(true)}>
-                        <Text>Show download link</Text>
-                    </Link>
-                )}
-                <Link to='#' onClick={(e) => _deleteInvoice(e, invoice.id)}>
-                    <Text>Delete invoice</Text>
-                </Link>
-            </Text>
-        </Flex>
+        <Table.Tr onClick={onRowClick} className='hover:cursor-pointer'>
+            <Table.Td>{creationDateString}</Table.Td>
+            <Table.Td>{getFormattedInvoiceNumber(invoice)}</Table.Td>
+            <Table.Td>{customer.name}</Table.Td>
+            <Table.Td>{invoice.status.toUpperCase()}</Table.Td>
+            <Table.Td>{dueDateString}</Table.Td>
+            <Table.Td>{sumWithSymbol}</Table.Td>
+        </Table.Tr>
     );
 };

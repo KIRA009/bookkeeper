@@ -45,10 +45,9 @@ export const ItemList = ({ form }: Props) => {
     const removeItem = (index: number) => {
         form.removeListItem('items', index);
     };
-    const total = items.reduce(
-        (acc, item) => acc + item.quantity * item.rate,
-        0,
-    );
+    const total = items
+        .reduce((acc, item) => acc + item.quantity * item.rate, 0)
+        .toFixed(2);
     return (
         <div>
             <Table>
@@ -82,10 +81,10 @@ export const ItemList = ({ form }: Props) => {
                         <Table.Td className='align-top'>
                             <TextInput
                                 readOnly
-                                value={
+                                value={(
                                     itemForm.values.quantity *
                                     itemForm.values.rate
-                                }
+                                ).toFixed(2)}
                             />
                         </Table.Td>
                         <Table.Td className='text-center align-top'>
@@ -126,19 +125,19 @@ export const ItemList = ({ form }: Props) => {
                             <Table.Td className='align-top'>
                                 <TextInput
                                     readOnly
-                                    value={item.quantity * item.rate}
+                                    value={(item.quantity * item.rate).toFixed(
+                                        2,
+                                    )}
                                 />
                             </Table.Td>
                             <Table.Td className='text-center'>
-                                {index > 1 && (
-                                    <ActionIcon
-                                        color='red'
-                                        variant='filled'
-                                        onClick={() => removeItem(index)}
-                                    >
-                                        <IconTrash />
-                                    </ActionIcon>
-                                )}
+                                <ActionIcon
+                                    color='red'
+                                    variant='filled'
+                                    onClick={() => removeItem(index)}
+                                >
+                                    <IconTrash />
+                                </ActionIcon>
                             </Table.Td>
                         </Table.Tr>
                     ))}
