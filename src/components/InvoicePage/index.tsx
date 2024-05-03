@@ -10,7 +10,8 @@ import {
 } from '../../utils/invoice';
 import { Font } from '@react-pdf/renderer';
 import { dateToString } from '../../utils/date';
-// import signature from '../../assets/signature.png'
+import { useAtomValue } from 'jotai';
+import { settingsAtom } from '../../atoms/settings';
 
 Font.register({
     family: 'Nunito',
@@ -38,6 +39,7 @@ const WrapText = ({ text }: { text?: string }) => (
 );
 
 export const InvoicePage = ({ invoice, customer }: Props) => {
+    const settings = useAtomValue(settingsAtom);
     const sum = getInvoiceAmount(invoice);
     const wordSum = converter
         .toWords(sum)
@@ -59,12 +61,11 @@ export const InvoicePage = ({ invoice, customer }: Props) => {
                     }}
                 >
                     <View>
-                        <Text style={{ fontWeight: 600 }}>
-                            {import.meta.env.VITE_USER_NAME}
-                        </Text>
-                        <Text>Assam</Text>
-                        <Text>India</Text>
-                        <Text>GSTIN: {import.meta.env.VITE_GSTIN}</Text>
+                        <Text style={{ fontWeight: 600 }}>{settings.name}</Text>
+                        {settings.address.split('\n').map((line, index) => (
+                            <Text key={index}>{line}</Text>
+                        ))}
+                        <Text>GSTIN: {settings.gstin}</Text>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
                         <Text style={{ fontSize: 18, fontWeight: 600 }}>
@@ -229,7 +230,7 @@ export const InvoicePage = ({ invoice, customer }: Props) => {
                 </View>
                 <View style={{ marginTop: 50, rowGap: 5 }}>
                     <Image
-                        src={import.meta.env.VITE_SIG_URL}
+                        src={settings.signature}
                         style={{ width: 150, height: 50 }}
                     />
                     <Text>Authorized Signature</Text>

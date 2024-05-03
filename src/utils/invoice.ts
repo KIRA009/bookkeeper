@@ -1,5 +1,6 @@
 import { Customer } from '../types/customer';
 import { Invoice } from '../types/invoice';
+import { Payment } from '../types/payment';
 
 export const getInvoiceAmount = (invoice: Invoice | undefined): number => {
     if (!invoice) return 0;
@@ -56,4 +57,14 @@ export const sortInvoicesByCreationDate = (invoices: Invoice[]): Invoice[] => {
             return 0;
         }
     });
+};
+
+export const getAmountInInr = (payment: Payment): number => {
+    return (
+        Math.round(
+            payment.exchangeRate *
+                (payment.amountReceived - payment.bankCharges) *
+                100,
+        ) / 100
+    );
 };

@@ -114,7 +114,12 @@ export const InvoiceBody = ({ invoice, customer }: Props) => {
         }
     };
 
-    const dueDate = form.values.dueDate ? new Date(form.values.dueDate) : null;
+    const creationDate = form.values.creationDate
+        ? new Date(form.values.creationDate)
+        : new Date();
+    const dueDate = form.values.dueDate
+        ? new Date(form.values.dueDate)
+        : creationDate;
 
     return (
         <FormProvider form={form}>
@@ -137,7 +142,7 @@ export const InvoiceBody = ({ invoice, customer }: Props) => {
                             label='Invoice date'
                             mb={20}
                             {...form.getInputProps('creationDate')}
-                            value={new Date(form.values.creationDate)}
+                            value={creationDate}
                         />
                     </Grid.Col>
                     <Grid.Col span={6}>

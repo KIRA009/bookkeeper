@@ -1,4 +1,4 @@
-import { PDFViewer, usePDF } from '@react-pdf/renderer';
+import { PDFDownloadLink, PDFViewer } from '@react-pdf/renderer';
 import { useAtomValue, useSetAtom } from 'jotai';
 import {
     getInvoiceByIdAtom,
@@ -72,20 +72,9 @@ const Actions = ({ invoice, document: pdfDocument, goBack }: ActionsProps) => {
         </Button>
     );
     const navigate = useNavigate();
-    const { url: pdfDownloadURL } = usePDF({ document: pdfDocument })[0];
 
     function goToEditPage() {
         navigate(getRouteByName('edit_invoice', { id: invoice.id }).url);
-    }
-
-    function downloadPDF() {
-        if (!pdfDownloadURL) {
-            return;
-        }
-        const link = document.createElement('a');
-        link.href = pdfDownloadURL;
-        link.download = `${getFormattedInvoiceNumber(invoice)}.pdf`;
-        link.click();
     }
 
     const markAsSentInvoice = useSetAtom(markInvoiceAsSentAtom);
@@ -110,12 +99,16 @@ const Actions = ({ invoice, document: pdfDocument, goBack }: ActionsProps) => {
                 >
                     Edit
                 </StyledButton>
-                <StyledButton
-                    leftSection={<IconPrinter />}
-                    onClick={downloadPDF}
+                <PDFDownloadLink
+                    document={pdfDocument}
+                    fileName={`${getFormattedInvoiceNumber(invoice)}.pdf`}
                 >
-                    PDF/Print
-                </StyledButton>
+                    {() => (
+                        <StyledButton leftSection={<IconPrinter />}>
+                            PDF/Print
+                        </StyledButton>
+                    )}
+                </PDFDownloadLink>
                 {invoice.status === InvoiceStatus.Draft && (
                     <StyledButton
                         leftSection={<IconMailCheck />}

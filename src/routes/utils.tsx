@@ -5,6 +5,7 @@ import { Invoices } from '../pages/Invoices';
 import { AddPayment } from '../pages/AddPayment';
 import { Reports } from '../pages/Reports';
 import { RouteInterface } from '../types/route';
+import { Settings } from '../pages/Settings';
 
 export const routes = [
     {
@@ -41,6 +42,11 @@ export const routes = [
         url: '/reports',
         name: 'list_reports',
         component: <Reports />,
+    },
+    {
+        url: '/settings',
+        name: 'settings',
+        component: <Settings />,
     },
 ] as const;
 
