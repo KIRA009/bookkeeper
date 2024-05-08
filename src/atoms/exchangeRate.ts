@@ -1,5 +1,5 @@
 import { atom } from 'jotai';
-import { atomWithStorage } from 'jotai/utils';
+import { atomWithLocalStorage } from './utils';
 
 type initialState = Record<
     string,
@@ -9,7 +9,7 @@ type initialState = Record<
     }
 >;
 
-export const exchangeRatesAtom = atomWithStorage<initialState>(
+export const exchangeRatesAtom = atomWithLocalStorage<initialState>(
     'bookkeeper:exchangeRates',
     {},
 );

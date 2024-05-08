@@ -1,7 +1,7 @@
-import { atomWithStorage } from 'jotai/utils';
 import { Customer } from '../types/customer';
 import { atom } from 'jotai';
 import { invoicesAtom } from './invoices';
+import { atomWithLocalStorage } from './utils';
 
 type initialState = Record<string, Customer>;
 
@@ -12,7 +12,10 @@ export const EmptyCustomer: Customer = {
     currency: '',
 };
 
-const customersAtom = atomWithStorage<initialState>('bookkeeper:customers', {});
+const customersAtom = atomWithLocalStorage<initialState>(
+    'bookkeeper:customers',
+    {},
+);
 
 export const addCustomerAtom = atom(null, (get, set, payload: Customer) => {
     const id = crypto.randomUUID();

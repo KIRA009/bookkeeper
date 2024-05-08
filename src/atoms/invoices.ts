@@ -1,10 +1,10 @@
 import { atom } from 'jotai';
 import { Invoice, InvoiceStatus } from '../types/invoice';
-import { atomWithStorage } from 'jotai/utils';
+import { atomWithLocalStorage } from './utils';
 
 type initialState = Record<string, Invoice>;
 
-export const invoicesAtom = atomWithStorage<initialState>(
+export const invoicesAtom = atomWithLocalStorage<initialState>(
     'bookkeeper:invoices',
     {},
 );
