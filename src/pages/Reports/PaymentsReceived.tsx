@@ -10,27 +10,13 @@ import {
     getInvoiceEditURL,
 } from '../../utils/invoice';
 import { Link } from 'react-router-dom';
-import { Group, Select, Stack } from '@mantine/core';
-import { useMemo, useState } from 'react';
+import { Stack } from '@mantine/core';
 import { Payment } from '../../types/payment';
-import { PaymentsReceivedFilter } from '../../types/filter';
+import { Filter, useFilters } from '../../hooks/filters';
+import { Filters } from '../../components/Filters';
 
 export function PaymentsReceived() {
     const payments = useAtomValue(getPaymentsAtom);
-    const [filters, setFilters] = useState<PaymentsReceivedFilter[]>([
-        { value: '', type: 'date' },
-        { value: '', type: 'customer' },
-    ]);
-    function updateFilter(
-        filterType: PaymentsReceivedFilter['type'],
-        value: string,
-    ) {
-        setFilters((filters) =>
-            filters.map((filter) =>
-                filter.type === filterType ? { ...filter, value } : filter,
-            ),
-        );
-    }
 
     const sortedPayments = Object.values(payments).sort((a, b) => {
         const dateA = new Date(a.paymentDate).getTime();
@@ -39,13 +25,20 @@ export function PaymentsReceived() {
         if (dateA < dateB) return 1;
         return 0;
     });
-    const filterFns = useMemo(
-        () => getPaymentsFilterCmpFunctions(filters),
-        [filters.map((filter) => filter.value).join(',')],
+
+    const {
+        filters,
+        updateFilter,
+        filteredObjs: filteredPayments,
+    } = useFilters(
+        sortedPayments,
+        [
+            { value: '', type: 'date' },
+            { value: '', type: 'customer' },
+        ],
+        getPaymentsFilterCmpFunctions,
     );
-    const filteredPayments = sortedPayments.filter((payment) =>
-        filterFns.every((fn) => fn(payment)),
-    );
+
     const customers = useAtomValue(getCustomersAtom);
     const invoices = useAtomValue(getInvoicesAtom);
     return (
@@ -98,58 +91,8 @@ export function PaymentsReceived() {
     );
 }
 
-type FilterProps = {
-    filters: PaymentsReceivedFilter[];
-    updateFilter: (type: PaymentsReceivedFilter['type'], value: string) => void;
-};
-
-function Filters({ filters, updateFilter }: FilterProps) {
-    const customers = useAtomValue(getCustomersAtom);
-    function getFilterValue(filterType: PaymentsReceivedFilter['type']) {
-        const filter = filters.find((f) => f.type === filterType);
-        return filter ? filter.value : 'all';
-    }
-
-    return (
-        <Group gap='md'>
-            <Select
-                data={[
-                    { value: '', label: 'All' },
-                    { value: 'today', label: 'Today' },
-                    { value: 'this-week', label: 'This Week' },
-                    { value: 'last-week', label: 'Last Week' },
-                    { value: 'this-month', label: 'This Month' },
-                    { value: 'last-month', label: 'Last Month' },
-                    { value: 'this-year', label: 'This Year' },
-                    { value: 'last-year', label: 'Last Year' },
-                ]}
-                value={getFilterValue('date')}
-                onChange={(value) =>
-                    value !== null && updateFilter('date', value)
-                }
-                label='Filter by date'
-                searchable
-            />
-            <Select
-                data={[{ value: '', label: 'All' }].concat(
-                    Object.values(customers).map((customer) => ({
-                        value: customer.id,
-                        label: customer.name,
-                    })),
-                )}
-                value={getFilterValue('customer')}
-                onChange={(value) =>
-                    value !== null && updateFilter('customer', value)
-                }
-                label='Filter by customer'
-                searchable
-            />
-        </Group>
-    );
-}
-
 function getPaymentsFilterCmpFunctions(
-    filters: PaymentsReceivedFilter[],
+    filters: Filter[],
 ): ((payment: Payment) => boolean)[] {
     const filterFns = [];
     for (const filter of filters) {
