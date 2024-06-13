@@ -41,8 +41,9 @@ const WrapText = ({ text }: { text?: string }) => (
 export const InvoicePage = ({ invoice, customer }: Props) => {
     const settings = useAtomValue(settingsAtom);
     const sum = getInvoiceAmount(invoice);
+    const taxRate = customer.currency === 'INR' ? 18 : 0;
     const wordSum = converter
-        .toWords(sum)
+        .toWords(sum * (1 + taxRate / 100))
         .split(' ')
         .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
         .join(' ');
@@ -140,44 +141,80 @@ export const InvoicePage = ({ invoice, customer }: Props) => {
                     <Text style={{ flex: 6 }}>Item & Description</Text>
                     <Text style={{ flex: 2, textAlign: 'right' }}>Qty</Text>
                     <Text style={{ flex: 2, textAlign: 'right' }}>Rate</Text>
-                    <Text style={{ flex: 2, textAlign: 'right' }}>IGST</Text>
+                    <Text style={{ flex: 2, textAlign: 'right' }}>CGST</Text>
+                    <Text style={{ flex: 2, textAlign: 'right' }}>SGST</Text>
                     <Text style={{ flex: 2, textAlign: 'right' }}>Amount</Text>
                 </View>
                 <View style={{ display: 'flex' }}>
-                    {invoice.items.map((item, index) => (
-                        <View
-                            key={index}
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                borderBottom: '1px solid rgba(0, 0, 0, 0.5)',
-                                paddingVertical: 10,
-                                paddingHorizontal: 5,
-                            }}
-                        >
-                            <Text style={{ flex: 1 }}>{index + 1}</Text>
-                            <Text style={{ flex: 6 }}>{item.itemDetail}</Text>
-                            <Text style={{ flex: 2, textAlign: 'right' }}>
-                                {item.quantity.toFixed(2)}
-                            </Text>
-                            <Text style={{ flex: 2, textAlign: 'right' }}>
-                                {item.rate.toFixed(2)}
-                            </Text>
+                    {invoice.items.map((item, index) => {
+                        const amount = item.quantity * item.rate;
+                        return (
                             <View
+                                key={index}
                                 style={{
                                     display: 'flex',
-                                    flex: 2,
-                                    textAlign: 'right',
+                                    flexDirection: 'row',
+                                    borderBottom:
+                                        '1px solid rgba(0, 0, 0, 0.5)',
+                                    paddingVertical: 10,
+                                    paddingHorizontal: 5,
                                 }}
                             >
-                                <Text>0.00</Text>
-                                <Text>0%</Text>
+                                <Text style={{ flex: 1 }}>{index + 1}</Text>
+                                <View style={{ flex: 6 }}>
+                                    <Text>{item.itemDetail}</Text>
+                                    <Text style={{ fontSize: 8 }}>
+                                        (HSN: 998314)
+                                    </Text>
+                                </View>
+                                <Text style={{ flex: 2, textAlign: 'right' }}>
+                                    {item.quantity.toFixed(2)}
+                                </Text>
+                                <Text style={{ flex: 2, textAlign: 'right' }}>
+                                    {item.rate.toFixed(2)}
+                                </Text>
+                                <View
+                                    style={{
+                                        display: 'flex',
+                                        flex: 2,
+                                        textAlign: 'right',
+                                    }}
+                                >
+                                    <Text>
+                                        {((amount * taxRate) / 2 / 100).toFixed(
+                                            2,
+                                        )}
+                                    </Text>
+                                    <Text style={{ fontSize: 8 }}>
+                                        ({taxRate / 2}%)
+                                    </Text>
+                                </View>
+                                <View
+                                    style={{
+                                        display: 'flex',
+                                        flex: 2,
+                                        textAlign: 'right',
+                                    }}
+                                >
+                                    <Text>
+                                        {((amount * taxRate) / 2 / 100).toFixed(
+                                            2,
+                                        )}
+                                    </Text>
+                                    <Text style={{ fontSize: 8 }}>
+                                        ({taxRate / 2}%)
+                                    </Text>
+                                </View>
+                                <Text style={{ flex: 2, textAlign: 'right' }}>
+                                    {(
+                                        item.quantity *
+                                        item.rate *
+                                        (1 + taxRate / 100)
+                                    ).toFixed(2)}
+                                </Text>
                             </View>
-                            <Text style={{ flex: 2, textAlign: 'right' }}>
-                                {(item.quantity * item.rate).toFixed(2)}
-                            </Text>
-                        </View>
-                    ))}
+                        );
+                    })}
                 </View>
                 <View
                     style={{
@@ -204,8 +241,22 @@ export const InvoicePage = ({ invoice, customer }: Props) => {
                             flexDirection: 'row',
                         }}
                     >
-                        <Text>IGST0 (0%)</Text>
-                        <Text>{getFormattedInvoiceAmount(0)}</Text>
+                        <Text>SGST ({taxRate / 2}%)</Text>
+                        <Text>
+                            {getFormattedInvoiceAmount(sum * (taxRate / 200))}
+                        </Text>
+                    </View>
+                    <View
+                        style={{
+                            width: 150,
+                            justifyContent: 'space-between',
+                            flexDirection: 'row',
+                        }}
+                    >
+                        <Text>CGST ({taxRate / 2}%)</Text>
+                        <Text>
+                            {getFormattedInvoiceAmount(sum * (taxRate / 200))}
+                        </Text>
                     </View>
                     <View
                         style={{
@@ -215,7 +266,11 @@ export const InvoicePage = ({ invoice, customer }: Props) => {
                         }}
                     >
                         <Text>Total</Text>
-                        <Text>{getFormattedInvoiceAmount(sum)}</Text>
+                        <Text>
+                            {getFormattedInvoiceAmount(
+                                sum * (1 + taxRate / 100),
+                            )}
+                        </Text>
                     </View>
                     <View
                         style={{
